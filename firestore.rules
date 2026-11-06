@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Reglas de seguridad: SOLO vuestros dos emails pueden entrar.
+// Cambia los dos emails de abajo por los vuestros (en minúsculas) y publica las reglas en Firebase.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isCouple() {
+      return request.auth != null
+        && request.auth.token.email in ['casianmiguelschavel@gmail.com', 'anamariacalerofernandez1@gmail.com'];
+    }
+
+    // Cada uno puede VER los datos de los dos, pero solo MODIFICAR los suyos.
+    match /users/{uid} {
+      allow read: if isCouple();
+      allow write: if isCouple() && request.auth.uid == uid;
+
+      match /{sub=**} {
+        allow read: if isCouple();
+        allow write: if isCouple() && request.auth.uid == uid;
+      }
+    }
+
+    // Todo lo demás, cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
